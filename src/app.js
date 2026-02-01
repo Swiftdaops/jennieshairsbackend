@@ -18,10 +18,6 @@ const searchRoutes = require("./routes/search.routes");
 const uploadRoutes = require("./routes/upload.routes");
 const innerCircleRoutes = require("./routes/innerCircle.routes");
 
-// IMPORTANT: Do NOT connect to the database from `app.js`.
-// Database lifecycle is controlled by `server.js` in normal runs
-// and by the test harness when running tests.
-
 const app = express();
 
 /**
@@ -34,14 +30,18 @@ app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// Configure CORS: allow a single origin or a comma-separated list via CLIENT_URL
-// Merge any provided CLIENT_URL with a safe fallback that always includes
-// the Vercel frontend origin so deployed instances accept requests from it.
+/**
+ * =========================
+ * CORS CONFIGURATION
+ * =========================
+ */
 const rawClient = process.env.CLIENT_URL || "http://localhost:3000";
+
 const extraOrigins = [
   "https://jennieshaircollection.store",
-  "https://www.jennieshairscollection.store",
+  "https://www.jennieshaircollection.store",
 ];
+
 const allowedOrigins = Array.from(
   new Set(
     rawClient
@@ -53,15 +53,18 @@ const allowedOrigins = Array.from(
 
 const corsOptions = {
   origin(origin, callback) {
-    // Allow server-to-server or same-origin requests with no origin
+    // Allow same-origin, server-to-server, curl, postman
     if (!origin) return callback(null, true);
 
-    // Allow wildcard
+    // Allow wildcard explicitly if configured
     if (allowedOrigins.includes("*")) return callback(null, true);
 
-    if (allowedOrigins.includes(origin)) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
 
-    return callback(new Error("CORS policy: This origin is not allowed."));
+    // IMPORTANT: deny silently (do NOT throw)
+    return callback(null, false);
   },
   credentials: true,
   methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE", "OPTIONS"],
@@ -79,6 +82,27 @@ app.use(rateLimiter);
 
 /**
  * =========================
+ * ROOT & HEALTH
+ * =========================
+ */
+app.get("/", (req, res) => {
+  res.status(200).json({
+    name: "Jennies Hairs API",
+    status: "running",
+    uptime: process.uptime(),
+  });
+});
+
+app.get("/api/health", (req, res) => {
+  res.status(200).json({
+    status: "OK",
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString(),
+  });
+});
+
+/**
+ * =========================
  * API ROUTES
  * =========================
  */
@@ -89,19 +113,6 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/search", searchRoutes);
 app.use("/api/uploads", uploadRoutes);
 app.use("/api/inner-circle", innerCircleRoutes);
-
-/**
- * =========================
- * HEALTH CHECK
- * =========================
- */
-app.get("/api/health", (req, res) => {
-  res.status(200).json({
-    status: "OK",
-    uptime: process.uptime(),
-    timestamp: new Date().toISOString(),
-  });
-});
 
 /**
  * =========================
