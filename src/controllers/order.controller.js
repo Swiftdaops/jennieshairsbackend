@@ -116,6 +116,38 @@ exports.checkout = async (req, res) => {
     console.warn('EmailJS receipt send failed', err);
   }
 
+  // Send admin notification with order summary (if EmailJS configured)
+  try {
+    const serviceId = process.env.EMAILJS_SERVICE_ID || process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID;
+    const adminTemplateId = process.env.EMAILJS_ADMIN_TEMPLATE_ID || process.env.EMAILJS_TEMPLATE_ID || process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID;
+    const userId = process.env.EMAILJS_USER || process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY;
+    const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL || 'tobepersonnalmail@gmail.com';
+
+    if (serviceId && adminTemplateId && userId) {
+      const itemsText = (order.items || []).map(it => `${it.name} x${it.quantity} — ₦${it.price}`).join('\n');
+      const adminParams = {
+        to_name: 'Admin',
+        to_email: adminEmail,
+        order_id: order._id.toString(),
+        customer_name: order.customerName,
+        customer_whatsapp: order.whatsappNumber,
+        items: itemsText,
+        total: order.totalAmount,
+        status: order.status,
+        createdAt: order.createdAt,
+      };
+
+      const _fetch = global.fetch || (await import('node-fetch')).default;
+      await _fetch('https://api.emailjs.com/api/v1.0/email/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ service_id: serviceId, template_id: adminTemplateId, user_id: userId, template_params: adminParams }),
+      });
+    }
+  } catch (err) {
+    console.warn('EmailJS admin notification failed', err);
+  }
+
   res.status(201).json({ order, whatsappLink });
 };
 
