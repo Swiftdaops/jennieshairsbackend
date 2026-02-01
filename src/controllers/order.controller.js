@@ -119,22 +119,47 @@ exports.checkout = async (req, res) => {
   // Send admin notification with order summary (if EmailJS configured)
   try {
     const serviceId = process.env.EMAILJS_SERVICE_ID || process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID;
-    const adminTemplateId = process.env.EMAILJS_ADMIN_TEMPLATE_ID || process.env.EMAILJS_TEMPLATE_ID || process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID;
+    const adminTemplateId = process.env.EMAILJS_ADMIN_TEMPLATE_ID || 'template_r0o7ufi';
     const userId = process.env.EMAILJS_USER || process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY;
     const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL || 'tobepersonnalmail@gmail.com';
 
     if (serviceId && adminTemplateId && userId) {
-      const itemsText = (order.items || []).map(it => `${it.name} x${it.quantity} — ₦${it.price}`).join('\n');
+      // Build items array for template (include image_url if product has images)
+      const Product = require('../models/Product');
+      const itemsForTemplate = await Promise.all((order.items || []).map(async (it) => {
+        let image_url = '';
+        try {
+          if (it.productId) {
+            const p = await Product.findById(it.productId).select('images');
+            if (p && Array.isArray(p.images) && p.images[0] && p.images[0].url) image_url = p.images[0].url;
+          }
+        } catch (e) {
+          // ignore
+        }
+        return {
+          image_url,
+          name: it.name || '',
+          units: it.quantity || 0,
+          price: Number(it.price || 0).toFixed(2),
+        };
+      }));
+
+      const cost = {
+        shipping: (order.shipping || 0).toFixed ? Number(order.shipping || 0).toFixed(2) : '0.00',
+        tax: (order.tax || 0).toFixed ? Number(order.tax || 0).toFixed(2) : '0.00',
+        total: Number(order.totalAmount || 0).toFixed(2),
+      };
+
+      const orderDate = order.createdAt ? new Date(order.createdAt).toLocaleString() : new Date().toLocaleString();
+
       const adminParams = {
-        to_name: 'Admin',
-        to_email: adminEmail,
         order_id: order._id.toString(),
-        customer_name: order.customerName,
-        customer_whatsapp: order.whatsappNumber,
-        items: itemsText,
-        total: order.totalAmount,
-        status: order.status,
-        createdAt: order.createdAt,
+        customer_name: order.customerName || '',
+        email: order.email || '',
+        phone: order.whatsappNumber || '',
+        orders: itemsForTemplate,
+        cost,
+        order_date: orderDate,
       };
 
       const _fetch = global.fetch || (await import('node-fetch')).default;
