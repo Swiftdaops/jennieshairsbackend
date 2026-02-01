@@ -39,7 +39,7 @@ app.use(cookieParser());
 // the Vercel frontend origin so deployed instances accept requests from it.
 const rawClient = process.env.CLIENT_URL || "http://localhost:3000";
 const extraOrigins = [
-  "https://jennieshaircollection.vercel.app",
+  "https://jennieshaircollection.store",
   "https://www.jennieshairscollection.store",
 ];
 const allowedOrigins = Array.from(

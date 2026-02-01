@@ -17,6 +17,29 @@ const startServer = async () => {
   try {
     await connectDB(process.env.MONGO_URI);
 
+    // Ensure admin user exists
+    try {
+      const User = require("./models/User");
+      const bcrypt = require("bcryptjs");
+      const adminEmail = process.env.ADMIN_EMAIL;
+      const adminPassword = process.env.ADMIN_PASSWORD;
+
+      if (adminEmail && adminPassword) {
+        const existing = await User.findOne({ email: adminEmail });
+        if (!existing) {
+          const hashed = await bcrypt.hash(adminPassword, 10);
+          await User.create({ email: adminEmail, password: hashed, role: "admin", name: "Admin" });
+          console.log(`[seed] created admin ${adminEmail}`);
+        } else {
+          console.log(`[seed] admin exists: ${adminEmail}`);
+        }
+      } else {
+        console.log("[seed] ADMIN_EMAIL or ADMIN_PASSWORD not set; skipping admin seed");
+      }
+    } catch (e) {
+      console.error("[seed] failed to ensure admin user:", e);
+    }
+
     const server = http.createServer(app);
 
     server.listen(PORT, () => {
