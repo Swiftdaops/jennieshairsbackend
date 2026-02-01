@@ -38,7 +38,10 @@ app.use(cookieParser());
 // Merge any provided CLIENT_URL with a safe fallback that always includes
 // the Vercel frontend origin so deployed instances accept requests from it.
 const rawClient = process.env.CLIENT_URL || "http://localhost:3000";
-const extraOrigins = ["https://jennieshaircollection.vercel.app"];
+const extraOrigins = [
+  "https://jennieshaircollection.vercel.app",
+  "https://www.jennieshairscollection.store",
+];
 const allowedOrigins = Array.from(
   new Set(
     rawClient
