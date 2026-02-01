@@ -35,12 +35,18 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // Configure CORS: allow a single origin or a comma-separated list via CLIENT_URL
-// Default includes localhost and the requested frontend origin so deployments
-// without a CLIENT_URL env var still accept requests from the Vercel app.
-const rawClient =
-  process.env.CLIENT_URL ||
-  "http://localhost:3000,https://jennieshaircollection.vercel.app";
-const allowedOrigins = rawClient.split(",").map((s) => s.trim());
+// Merge any provided CLIENT_URL with a safe fallback that always includes
+// the Vercel frontend origin so deployed instances accept requests from it.
+const rawClient = process.env.CLIENT_URL || "http://localhost:3000";
+const extraOrigins = ["https://jennieshaircollection.vercel.app"];
+const allowedOrigins = Array.from(
+  new Set(
+    rawClient
+      .split(",")
+      .map((s) => s.trim())
+      .concat(extraOrigins)
+  )
+);
 
 const corsOptions = {
   origin(origin, callback) {
