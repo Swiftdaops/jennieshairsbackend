@@ -4,12 +4,10 @@ const User = require('../models/User');
 
 // Cross-domain auth cookie (Frontend .store -> Backend .onrender.com)
 // Note: `sameSite: 'none'` requires `secure: true` in modern browsers.
-const isProd = process.env.NODE_ENV === 'production';
-
 const COOKIE_OPTIONS = {
   httpOnly: true,
-  secure: isProd,
-  sameSite: isProd ? 'none' : 'lax',
+  secure: true,
+  sameSite: 'none',
   maxAge: 24 * 60 * 60 * 1000, // 24 hours
   path: '/',
 };
