@@ -20,6 +20,9 @@ const innerCircleRoutes = require("./routes/innerCircle.routes");
 
 const app = express();
 
+// Render/Cloud providers often sit behind a proxy; this helps secure cookies behave correctly.
+app.set("trust proxy", 1);
+
 /**
  * =========================
  * GLOBAL MIDDLEWARES
@@ -60,16 +63,16 @@ const corsOptions = {
     if (!origin) return callback(null, true);
 
     // Allow wildcard explicitly if configured
-    if (allowedOrigins.includes("*")) return callback(null, true);
+    if (allowedOrigins.includes("*")) return callback(null, origin);
 
     // Exact match
-    if (allowedOrigins.includes(origin)) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, origin);
 
     // Allow any subdomain or www variant for the primary production domain
     try {
       const host = new URL(origin).hostname;
       if (host.endsWith("jennieshairscollection.store") || host.endsWith("jennieshaircollection.store")) {
-        return callback(null, true);
+        return callback(null, origin);
       }
     } catch (e) {
       // ignore parsing errors
@@ -81,6 +84,8 @@ const corsOptions = {
   credentials: true,
   methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
+  optionsSuccessStatus: 200,
+  maxAge: 86400,
 };
 
 app.use(cors(corsOptions));
