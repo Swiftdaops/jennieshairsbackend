@@ -41,8 +41,8 @@ const extraOrigins = [
   "http://127.0.0.1:3000",
   "http://localhost:3001",
   "http://127.0.0.1:3001",
-  "https://jennieshaircollection.store",
-  "https://www.jennieshaircollection.store",
+  "https://jennieshairscollection.store",
+  "https://www.jennieshairscollection.store",
 ];
 
 const allowedOrigins = Array.from(
@@ -62,8 +62,17 @@ const corsOptions = {
     // Allow wildcard explicitly if configured
     if (allowedOrigins.includes("*")) return callback(null, true);
 
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
+    // Exact match
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+
+    // Allow any subdomain or www variant for the primary production domain
+    try {
+      const host = new URL(origin).hostname;
+      if (host.endsWith("jennieshairscollection.store") || host.endsWith("jennieshaircollection.store")) {
+        return callback(null, true);
+      }
+    } catch (e) {
+      // ignore parsing errors
     }
 
     // IMPORTANT: deny silently (do NOT throw)
