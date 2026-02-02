@@ -4,6 +4,7 @@ const checkoutSchema = z.object({
   customerName: z.string().min(2),
   whatsappNumber: z.string().min(10),
   address: z.string().min(5),
+  email: z.string().email().optional(),
 
   items: z.array(
     z.object({
@@ -13,6 +14,10 @@ const checkoutSchema = z.object({
       quantity: z.number().int().positive(),
     })
   ),
+
+  totalAmount: z.number().positive(),
+  shipping: z.number().nonnegative().optional(),
+  tax: z.number().nonnegative().optional(),
 });
 
 exports.checkoutSchema = checkoutSchema;

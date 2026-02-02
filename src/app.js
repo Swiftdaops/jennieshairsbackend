@@ -38,6 +38,9 @@ app.use(cookieParser());
 const rawClient = process.env.CLIENT_URL || "http://localhost:3000";
 
 const extraOrigins = [
+  "http://127.0.0.1:3000",
+  "http://localhost:3001",
+  "http://127.0.0.1:3001",
   "https://jennieshaircollection.store",
   "https://www.jennieshaircollection.store",
 ];

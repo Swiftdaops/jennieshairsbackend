@@ -33,6 +33,16 @@ const orderSchema = new mongoose.Schema(
       required: true,
     },
 
+    shipping: {
+      type: Number,
+      default: 0,
+    },
+
+    tax: {
+      type: Number,
+      default: 0,
+    },
+
     status: {
       type: String,
       enum: ["pending", "accepted", "in_transit", "delivered", "cancelled"],
