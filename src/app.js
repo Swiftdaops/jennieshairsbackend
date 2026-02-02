@@ -38,10 +38,18 @@ app.use(cookieParser());
  * CORS CONFIGURATION
  * =========================
  */
-const rawClient = process.env.CLIENT_URL || "http://localhost:3000";
+let rawClient = process.env.CLIENT_URL || "http://localhost:3000";
+
+// In production default to the public storefront if CLIENT_URL is not set
+if (process.env.NODE_ENV === 'production' && rawClient === 'http://localhost:3000') {
+  rawClient = 'https://www.jennieshairscollection.store';
+}
 
 const extraOrigins = [
   "http://127.0.0.1:3000",
+  "http://localhost:3000",
+  "http://127.0.0.1:5000",
+  "http://localhost:5000",
   "http://localhost:3001",
   "http://127.0.0.1:3001",
   "https://jennieshairscollection.store",
